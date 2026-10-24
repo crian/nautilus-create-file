@@ -1,0 +1,50 @@
+# Translation template for nautilus-create-file.
+# This file is distributed under the same license as the extension.
+msgid ""
+msgstr ""
+"Project-Id-Version: nautilus-create-file\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: nautilus-create-file.py
+msgid "Create New File…"
+msgstr "Neue Datei erstellen …"
+
+#: nautilus-create-file.py
+msgid "Enter a name and extension to create a file"
+msgstr "Name und Endung der neuen Datei eingeben"
+
+#: nautilus-create-file.py
+msgid "New File"
+msgstr "Neue Datei"
+
+#: nautilus-create-file.py
+msgid "Enter a file name:"
+msgstr "Dateinamen eingeben:"
+
+#: nautilus-create-file.py
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: nautilus-create-file.py
+msgid "Create"
+msgstr "Erstellen"
+
+#: nautilus-create-file.py
+msgid "Invalid file name."
+msgstr "Ungültiger Dateiname."
+
+#: nautilus-create-file.py
+#, python-brace-format
+msgid "“{name}” already exists."
+msgstr "„{name}“ existiert bereits."
+
+#: nautilus-create-file.py
+msgid "Creation Error"
+msgstr "Fehler beim Erstellen"
+
+#: nautilus-create-file.py
+msgid "OK"
+msgstr "OK"

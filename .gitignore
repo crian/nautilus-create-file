@@ -1,0 +1,4 @@
+locale/
+build/
+__pycache__/
+*.mo

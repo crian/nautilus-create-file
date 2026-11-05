@@ -13,6 +13,10 @@ gi.require_version("Adw", "1")
 gi.require_version("Nautilus", "4.1")
 from gi.repository import Adw, Gio, GLib, GObject, Gtk, Nautilus
 
+# Adw.AlertDialog needs libadwaita >= 1.5; fail at load time with a clear message
+if not hasattr(Adw, "AlertDialog"):
+    raise ImportError("nautilus-create-file requires libadwaita >= 1.5 (Adw.AlertDialog)")
+
 DEFAULT_NAME = "new-file.txt"
 
 # Virtual locations where files can't be created

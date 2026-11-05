@@ -133,7 +133,7 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
 
         if name in (".", "..") or "/" in name:
             error = _("Invalid file name.")
-        elif name and folder.get_child(name).query_exists(None):
+        elif name and folder.get_child_for_display_name(name).query_exists(None):
             error = _("“{name}” already exists.").format(name=name)
 
         if error:

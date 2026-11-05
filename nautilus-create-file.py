@@ -19,6 +19,11 @@ from gi.repository import Adw, Gio, GLib, GObject, Gtk, Nautilus
 
 DEFAULT_NAME = "new-file.txt"
 
+# Virtual locations where files can't be created
+UNSUPPORTED_SCHEMES = frozenset(
+    {"trash", "recent", "starred", "x-nautilus-search", "other-locations"}
+)
+
 # Delay before checking whether a name exists, so typing doesn't trigger I/O per key
 EXISTS_CHECK_DELAY_MS = 150
 
@@ -59,6 +64,11 @@ def _load_translation() -> gettext.GNUTranslations:
 _ = _load_translation().gettext
 
 
+def _can_create_in(location: Gio.File) -> bool:
+    """Return True if *location* is a place where a file could be created."""
+    return location.get_uri_scheme() not in UNSUPPORTED_SCHEMES
+
+
 class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
     """Nautilus extension providing a "Create New File…" context menu entry."""
 
@@ -84,7 +94,7 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
     def get_background_items(self, current_folder: Nautilus.FileInfo) -> List[Nautilus.MenuItem]:
         """Return menu items for the folder background context menu."""
         location = current_folder.get_location()
-        if location is None:
+        if location is None or not _can_create_in(location):
             return []
         return [self._make_item("CreateFileExtension::Create", location)]
 
@@ -94,7 +104,7 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         if len(files) != 1 or not files[0].is_directory():
             return []
         location = files[0].get_location()
-        if location is None:
+        if location is None or not _can_create_in(location):
             return []
         return [self._make_item("CreateFileExtension::CreateInFolder", location)]
 

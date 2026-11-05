@@ -19,6 +19,9 @@ from gi.repository import Adw, Gio, GLib, GObject, Gtk, Nautilus
 
 DEFAULT_NAME = "new-file.txt"
 
+# Delay before checking whether a name exists, so typing doesn't trigger I/O per key
+EXISTS_CHECK_DELAY_MS = 150
+
 # --- Localization (standard gettext) -------------------------------------
 # Catalogs are searched as <localedir>/<lang>/LC_MESSAGES/<domain>.mo in:
 #   1. "locale/" next to this file
@@ -62,6 +65,8 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
     def __init__(self) -> None:
         super().__init__()
         self._dialog_open: bool = False
+        self._check_source: int = 0  # pending debounce timeout, 0 if none
+        self._check_id: int = 0  # bumped to invalidate in-flight checks
 
     # ------------------------------------------------------------------
     # Menu entries
@@ -145,7 +150,30 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
 
     def _on_closed(self, _dialog: Adw.AlertDialog) -> None:
         """Reset the dialog-open flag when the dialog is closed."""
+        self._cancel_pending_check()
         self._dialog_open = False
+
+    def _cancel_pending_check(self) -> None:
+        """Drop the debounce timeout and ignore results of running checks."""
+        if self._check_source:
+            GLib.source_remove(self._check_source)
+            self._check_source = 0
+        self._check_id += 1
+
+    def _set_validation(
+        self,
+        entry: Gtk.Entry,
+        dialog: Adw.AlertDialog,
+        error: Optional[str],
+        ok: bool,
+    ) -> None:
+        """Show *error* (if any) and enable "Create" only when *ok*."""
+        if error:
+            entry.add_css_class("error")
+        else:
+            entry.remove_css_class("error")
+        dialog.set_body(error or _("Enter a file name:"))
+        dialog.set_response_enabled("create", ok)
 
     def _on_changed(
         self,
@@ -153,33 +181,79 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         dialog: Adw.AlertDialog,
         folder: Gio.File,
     ) -> None:
-        """Validate the entry text and update the dialog state."""
+        """Validate the entry text; the existence check runs asynchronously."""
         name = entry.get_text().strip()
-        error: Optional[str] = None
+        self._cancel_pending_check()
 
+        error: Optional[str] = None
         if not name:
             error = _("Please enter a file name.")
         elif "/" in name or "\0" in name:
             error = _("Invalid file name.")
         elif name in (".", "..") or all(c == "." for c in name):
             error = _("Invalid file name.")
-        else:
-            try:
-                exists = folder.get_child_for_display_name(name).query_exists(None)
-            except GLib.Error:
-                # Some backends reject names that the checks above let through
-                error = _("Invalid file name.")
-            else:
-                if exists:
-                    error = _("“{name}” already exists.").format(name=name)
 
         if error:
-            entry.add_css_class("error")
-        else:
-            entry.remove_css_class("error")
+            self._set_validation(entry, dialog, error, False)
+            return
 
-        dialog.set_body(error or _("Enter a file name:"))
-        dialog.set_response_enabled("create", bool(name) and error is None)
+        # Name looks valid: keep "Create" disabled until the check finished
+        self._set_validation(entry, dialog, None, False)
+        self._check_source = GLib.timeout_add(
+            EXISTS_CHECK_DELAY_MS,
+            self._start_exists_check,
+            entry,
+            dialog,
+            folder,
+            name,
+            self._check_id,
+        )
+
+    def _start_exists_check(
+        self,
+        entry: Gtk.Entry,
+        dialog: Adw.AlertDialog,
+        folder: Gio.File,
+        name: str,
+        check_id: int,
+    ) -> bool:
+        """Query whether *name* already exists in *folder* (debounced)."""
+        self._check_source = 0
+        try:
+            target = folder.get_child_for_display_name(name)
+        except GLib.Error:
+            # Some backends reject names that the checks above let through
+            self._set_validation(entry, dialog, _("Invalid file name."), False)
+            return GLib.SOURCE_REMOVE
+
+        target.query_info_async(
+            "standard::name",
+            Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
+            GLib.PRIORITY_DEFAULT,
+            None,
+            self._on_exists_checked,
+            (entry, dialog, name, check_id),
+        )
+        return GLib.SOURCE_REMOVE
+
+    def _on_exists_checked(
+        self,
+        target: Gio.File,
+        result: Gio.AsyncResult,
+        data: tuple,
+    ) -> None:
+        """Apply the result of the existence check, unless it is outdated."""
+        entry, dialog, name, check_id = data
+        if check_id != self._check_id:
+            return
+        try:
+            target.query_info_finish(result)
+        except GLib.Error:
+            # Not found (or not queryable): real errors surface on creation
+            self._set_validation(entry, dialog, None, True)
+            return
+        error = _("“{name}” already exists.").format(name=name)
+        self._set_validation(entry, dialog, error, False)
 
     # ------------------------------------------------------------------
     # File creation (asynchronous, so slow network mounts don't block Nautilus)

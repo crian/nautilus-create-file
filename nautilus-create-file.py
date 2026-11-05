@@ -10,11 +10,7 @@ import gi
 # Gtk and Adwaita are required
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-# Nautilus 4.1 is used by current GNOME releases, 4.0 by older ones
-try:
-    gi.require_version("Nautilus", "4.1")
-except ValueError:
-    gi.require_version("Nautilus", "4.0")
+gi.require_version("Nautilus", "4.1")
 from gi.repository import Adw, Gio, GLib, GObject, Gtk, Nautilus
 
 DEFAULT_NAME = "new-file.txt"

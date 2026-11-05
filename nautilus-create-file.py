@@ -293,7 +293,7 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
                 parent,
             )
         except GLib.Error as e:
-            self._show_error(parent, str(e))
+            self._show_error(parent, e)
 
     def _on_created(
         self,
@@ -305,7 +305,7 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         try:
             stream = target.create_finish(result)
         except GLib.Error as e:
-            self._show_error(parent, str(e))
+            self._show_error(parent, e)
             return
         stream.close_async(
             GLib.PRIORITY_DEFAULT, None, self._on_stream_closed, parent
@@ -321,10 +321,33 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         try:
             stream.close_finish(result)
         except GLib.Error as e:
-            self._show_error(parent, str(e))
+            self._show_error(parent, e)
 
-    def _show_error(self, parent: Optional[Gtk.Window], message: str) -> None:
-        """Show an error dialog with *message* to the user."""
-        dialog = Adw.AlertDialog(heading=_("Creation Error"), body=message)
+    def _format_error(self, error: GLib.Error) -> str:
+        """Turn *error* into a user-friendly translated message.
+
+        GIO error messages are usually in English, so we match against
+        common keywords and translate them.
+        """
+        message = str(error).strip()
+        if not message:
+            return _("An unknown error occurred.")
+        lower = message.lower()
+        if "permission" in lower:
+            return _("Permission denied.")
+        if "read-only" in lower or "read only" in lower:
+            return _("Read-only file system.")
+        if "no space" in lower:
+            return _("No space left on device.")
+        if "already exists" in lower:
+            return _("A file with this name already exists.")
+        return message
+
+    def _show_error(self, parent: Optional[Gtk.Window], error: GLib.Error) -> None:
+        """Show an error dialog for *error* to the user."""
+        dialog = Adw.AlertDialog(
+            heading=_("Creation Error"),
+            body=self._format_error(error),
+        )
         dialog.add_response("ok", _("OK"))
         dialog.present(parent)

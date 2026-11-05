@@ -86,7 +86,6 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         item = Nautilus.MenuItem(
             name=name,
             label=_("Create New File…"),
-            tip=_("Enter a name and extension to create a file"),
         )
         item.connect("activate", self._on_activate, location)
         return item

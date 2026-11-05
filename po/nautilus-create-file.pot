@@ -36,6 +36,10 @@ msgid "Invalid file name."
 msgstr ""
 
 #: nautilus-create-file.py
+msgid "Please enter a file name."
+msgstr ""
+
+#: nautilus-create-file.py
 #, python-brace-format
 msgid "“{name}” already exists."
 msgstr ""

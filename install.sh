@@ -16,7 +16,7 @@ if [[ "${1:-}" == "uninstall" ]]; then
     exit 0
 fi
 
-python3 compile-translations.py >/dev/null
+python3 compile-translations.py
 
 mkdir -p "$EXT_DIR"
 install -m 644 nautilus-create-file.py "$EXT_DIR/nautilus-create-file.py"

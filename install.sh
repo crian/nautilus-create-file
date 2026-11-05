@@ -2,6 +2,7 @@
 # Per-user install without meson/gettext tools.
 # Usage: ./install.sh [uninstall]
 set -euo pipefail
+shopt -s nullglob
 
 cd "$(dirname "$0")"
 DATA="${XDG_DATA_HOME:-$HOME/.local/share}"

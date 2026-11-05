@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+"""Nautilus extension: add "Create New File…" to the context menu."""
+
 import gettext
 import os
+from typing import List, Optional
 
 import gi
 
@@ -24,7 +27,13 @@ DEFAULT_NAME = "new-file.txt"
 GETTEXT_DOMAIN = "nautilus-create-file"
 
 
-def _load_translation():
+def _load_translation() -> gettext.GNUTranslations:
+    """Load the gettext translation for the session language.
+
+    Searches the locale directories next to the script, in the user data
+    directory, and in /usr/share/locale. Falls back to the English source
+    strings if no catalog is found.
+    """
     here = [
         os.path.dirname(os.path.abspath(__file__)),
         os.path.dirname(os.path.realpath(__file__)),  # in case of a symlink
@@ -48,14 +57,17 @@ _ = _load_translation().gettext
 
 
 class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
-    def __init__(self):
+    """Nautilus extension providing a "Create New File…" context menu entry."""
+
+    def __init__(self) -> None:
         super().__init__()
-        self._dialog_open = False
+        self._dialog_open: bool = False
 
     # ------------------------------------------------------------------
     # Menu entries
     # ------------------------------------------------------------------
-    def _make_item(self, name, location):
+    def _make_item(self, name: str, location: Nautilus.FileInfo) -> Nautilus.MenuItem:
+        """Create a menu item that opens the new-file dialog for *location*."""
         item = Nautilus.MenuItem(
             name=name,
             label=_("Create New File…"),
@@ -64,13 +76,15 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         item.connect("activate", self._on_activate, location)
         return item
 
-    def get_background_items(self, current_folder):
+    def get_background_items(self, current_folder: Nautilus.FileInfo) -> List[Nautilus.MenuItem]:
+        """Return menu items for the folder background context menu."""
         location = current_folder.get_location()
         if location is None:
             return []
         return [self._make_item("CreateFileExtension::Create", location)]
 
-    def get_file_items(self, files):
+    def get_file_items(self, files: List[Nautilus.FileInfo]) -> List[Nautilus.MenuItem]:
+        """Return menu items when exactly one folder is selected."""
         # Offer the entry when exactly one folder is selected
         if len(files) != 1 or not files[0].is_directory():
             return []
@@ -82,7 +96,12 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
     # ------------------------------------------------------------------
     # Dialog
     # ------------------------------------------------------------------
-    def _on_activate(self, _item, folder):
+    def _on_activate(
+        self,
+        _item: Nautilus.MenuItem,
+        folder: Nautilus.FileInfo,
+    ) -> None:
+        """Open the "New File" dialog for *folder*."""
         # Prevent multiple dialogs from rapid double-clicks
         if self._dialog_open:
             return
@@ -117,19 +136,26 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         # Focus the entry and select only the file stem, like renaming in Nautilus
         stem_len = len(DEFAULT_NAME.rsplit(".", 1)[0])
 
-        def _focus():
+        def _focus() -> bool:
             entry.grab_focus()
             entry.select_region(0, stem_len)
             return False
 
         GLib.idle_add(_focus)
 
-    def _on_closed(self, _dialog):
+    def _on_closed(self, _dialog: Adw.AlertDialog) -> None:
+        """Reset the dialog-open flag when the dialog is closed."""
         self._dialog_open = False
 
-    def _on_changed(self, entry, dialog, folder):
+    def _on_changed(
+        self,
+        entry: Gtk.Entry,
+        dialog: Adw.AlertDialog,
+        folder: Nautilus.FileInfo,
+    ) -> None:
+        """Validate the entry text and update the dialog state."""
         name = entry.get_text().strip()
-        error = None
+        error: Optional[str] = None
 
         if not name:
             error = _("Please enter a file name.")
@@ -151,7 +177,15 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
     # ------------------------------------------------------------------
     # File creation (asynchronous, so slow network mounts don't block Nautilus)
     # ------------------------------------------------------------------
-    def _on_response(self, _dialog, response, entry, folder, parent):
+    def _on_response(
+        self,
+        _dialog: Adw.AlertDialog,
+        response: str,
+        entry: Gtk.Entry,
+        folder: Nautilus.FileInfo,
+        parent: Optional[Gtk.Window],
+    ) -> None:
+        """Handle the dialog response and create the file if requested."""
         if response != "create":
             return
 
@@ -168,14 +202,21 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         except GLib.Error as e:
             self._show_error(parent, str(e))
 
-    def _on_created(self, target, result, parent):
+    def _on_created(
+        self,
+        target: Gio.File,
+        result: Gio.AsyncResult,
+        parent: Optional[Gtk.Window],
+    ) -> None:
+        """Finish asynchronous file creation and close the stream."""
         try:
             stream = target.create_finish(result)
             stream.close(None)
         except GLib.Error as e:
             self._show_error(parent, str(e))
 
-    def _show_error(self, parent, message):
+    def _show_error(self, parent: Optional[Gtk.Window], message: str) -> None:
+        """Show an error dialog with *message* to the user."""
         dialog = Adw.AlertDialog(heading=_("Creation Error"), body=message)
         dialog.add_response("ok", _("OK"))
         dialog.present(parent)

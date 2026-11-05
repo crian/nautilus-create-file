@@ -120,7 +120,6 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         # Prevent multiple dialogs from rapid double-clicks
         if self._dialog_open:
             return
-        self._dialog_open = True
 
         app = Gtk.Application.get_default()
         parent = app.get_active_window() if app else None
@@ -146,6 +145,9 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         # Initial validation (the default name may already exist)
         self._on_changed(entry, dialog, folder)
 
+        # Set the flag only now: if the setup above raised, no "closed" signal
+        # would ever reset it and the menu entry would stay dead
+        self._dialog_open = True
         dialog.present(parent)
 
         # Focus the entry and select only the file stem, like renaming in Nautilus

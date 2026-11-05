@@ -36,6 +36,7 @@ msgstr "Erstellen"
 msgid "Invalid file name."
 msgstr "Ungültiger Dateiname."
 
+#: nautilus-create-file.py
 msgid "Please enter a file name."
 msgstr "Bitte geben Sie einen Dateinamen ein."
 
@@ -51,3 +52,19 @@ msgstr "Fehler beim Erstellen"
 #: nautilus-create-file.py
 msgid "OK"
 msgstr "OK"
+
+#: nautilus-create-file.py
+msgid "An unknown error occurred."
+msgstr "Ein unbekannter Fehler ist aufgetreten."
+
+#: nautilus-create-file.py
+msgid "Permission denied."
+msgstr "Keine Berechtigung."
+
+#: nautilus-create-file.py
+msgid "Read-only file system."
+msgstr "Schreibgeschütztes Dateisystem."
+
+#: nautilus-create-file.py
+msgid "No space left on device."
+msgstr "Kein Speicherplatz mehr auf dem Gerät."

@@ -51,3 +51,19 @@ msgstr ""
 #: nautilus-create-file.py
 msgid "OK"
 msgstr ""
+
+#: nautilus-create-file.py
+msgid "An unknown error occurred."
+msgstr ""
+
+#: nautilus-create-file.py
+msgid "Permission denied."
+msgstr ""
+
+#: nautilus-create-file.py
+msgid "Read-only file system."
+msgstr ""
+
+#: nautilus-create-file.py
+msgid "No space left on device."
+msgstr ""

@@ -45,6 +45,10 @@ msgid "“{name}” already exists."
 msgstr ""
 
 #: nautilus-create-file.py
+msgid "A file with this name already exists."
+msgstr ""
+
+#: nautilus-create-file.py
 msgid "Creation Error"
 msgstr ""
 

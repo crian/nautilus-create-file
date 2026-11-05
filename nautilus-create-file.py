@@ -326,21 +326,20 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
     def _format_error(self, error: GLib.Error) -> str:
         """Turn *error* into a user-friendly translated message.
 
-        GIO error messages are usually in English, so we match against
-        common keywords and translate them.
+        Uses GIO error codes instead of matching the (English) error
+        message text, so it works regardless of the system locale.
         """
-        message = str(error).strip()
+        if error.matches(Gio.io_error_quark(), Gio.IOErrorEnum.EXISTS):
+            return _("A file with this name already exists.")
+        if error.matches(Gio.io_error_quark(), Gio.IOErrorEnum.PERMISSION_DENIED):
+            return _("Permission denied.")
+        if error.matches(Gio.io_error_quark(), Gio.IOErrorEnum.READ_ONLY):
+            return _("Read-only file system.")
+        if error.matches(Gio.io_error_quark(), Gio.IOErrorEnum.NO_SPACE):
+            return _("No space left on device.")
+        message = error.message.strip() if error.message else ""
         if not message:
             return _("An unknown error occurred.")
-        lower = message.lower()
-        if "permission" in lower:
-            return _("Permission denied.")
-        if "read-only" in lower or "read only" in lower:
-            return _("Read-only file system.")
-        if "no space" in lower:
-            return _("No space left on device.")
-        if "already exists" in lower:
-            return _("A file with this name already exists.")
         return message
 
     def _show_error(self, parent: Optional[Gtk.Window], error: GLib.Error) -> None:

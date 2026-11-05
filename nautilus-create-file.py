@@ -162,14 +162,14 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
                 parent,
             )
         except GLib.Error as e:
-            self._show_error(parent, e.message)
+            self._show_error(parent, str(e))
 
     def _on_created(self, target, result, parent):
         try:
             stream = target.create_finish(result)
             stream.close(None)
         except GLib.Error as e:
-            self._show_error(parent, e.message)
+            self._show_error(parent, str(e))
 
     def _show_error(self, parent, message):
         dialog = Adw.AlertDialog(heading=_("Creation Error"), body=message)

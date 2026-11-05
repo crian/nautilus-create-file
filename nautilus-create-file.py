@@ -163,8 +163,15 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
             error = _("Invalid file name.")
         elif name in (".", "..") or all(c == "." for c in name):
             error = _("Invalid file name.")
-        elif folder.get_child_for_display_name(name).query_exists(None):
-            error = _("“{name}” already exists.").format(name=name)
+        else:
+            try:
+                exists = folder.get_child_for_display_name(name).query_exists(None)
+            except GLib.Error:
+                # Some backends reject names that the checks above let through
+                error = _("Invalid file name.")
+            else:
+                if exists:
+                    error = _("“{name}” already exists.").format(name=name)
 
         if error:
             entry.add_css_class("error")

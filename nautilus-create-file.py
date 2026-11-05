@@ -66,7 +66,7 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
     # ------------------------------------------------------------------
     # Menu entries
     # ------------------------------------------------------------------
-    def _make_item(self, name: str, location: Nautilus.FileInfo) -> Nautilus.MenuItem:
+    def _make_item(self, name: str, location: Gio.File) -> Nautilus.MenuItem:
         """Create a menu item that opens the new-file dialog for *location*."""
         item = Nautilus.MenuItem(
             name=name,
@@ -99,7 +99,7 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
     def _on_activate(
         self,
         _item: Nautilus.MenuItem,
-        folder: Nautilus.FileInfo,
+        folder: Gio.File,
     ) -> None:
         """Open the "New File" dialog for *folder*."""
         # Prevent multiple dialogs from rapid double-clicks
@@ -151,7 +151,7 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         self,
         entry: Gtk.Entry,
         dialog: Adw.AlertDialog,
-        folder: Nautilus.FileInfo,
+        folder: Gio.File,
     ) -> None:
         """Validate the entry text and update the dialog state."""
         name = entry.get_text().strip()
@@ -182,7 +182,7 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         _dialog: Adw.AlertDialog,
         response: str,
         entry: Gtk.Entry,
-        folder: Nautilus.FileInfo,
+        folder: Gio.File,
         parent: Optional[Gtk.Window],
     ) -> None:
         """Handle the dialog response and create the file if requested."""

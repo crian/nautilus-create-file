@@ -215,10 +215,25 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         result: Gio.AsyncResult,
         parent: Optional[Gtk.Window],
     ) -> None:
-        """Finish asynchronous file creation and close the stream."""
+        """Finish asynchronous file creation and close the stream asynchronously."""
         try:
             stream = target.create_finish(result)
-            stream.close(None)
+        except GLib.Error as e:
+            self._show_error(parent, str(e))
+            return
+        stream.close_async(
+            GLib.PRIORITY_DEFAULT, None, self._on_stream_closed, parent
+        )
+
+    def _on_stream_closed(
+        self,
+        stream: Gio.OutputStream,
+        result: Gio.AsyncResult,
+        parent: Optional[Gtk.Window],
+    ) -> None:
+        """Finish closing the new file's stream (commits it on remote mounts)."""
+        try:
+            stream.close_finish(result)
         except GLib.Error as e:
             self._show_error(parent, str(e))
 

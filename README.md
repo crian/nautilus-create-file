@@ -24,7 +24,7 @@ A small [Nautilus](https://apps.gnome.org/Nautilus/) (GNOME Files) extension tha
 ### Per user (no build tools needed)
 
 ```sh
-git clone https://github.com/<your-user>/nautilus-create-file.git
+git clone https://github.com/crian/nautilus-create-file.git
 cd nautilus-create-file
 bash install.sh
 nautilus -q

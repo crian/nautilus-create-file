@@ -30,25 +30,34 @@ EXISTS_CHECK_DELAY_MS = 150
 # --- Localization (standard gettext) -------------------------------------
 # Catalogs are searched as <localedir>/<lang>/LC_MESSAGES/<domain>.mo in:
 #   1. "locale/" next to this file
-#   2. ~/.local/share/locale
-#   3. /usr/share/locale
+#   2. <prefix>/share/locale for a Meson install
+#   3. ~/.local/share/locale
+#   4. /usr/share/locale
 GETTEXT_DOMAIN = "nautilus-create-file"
 
 
 def _load_translation() -> gettext.GNUTranslations:
     """Load the gettext translation for the session language.
 
-    Searches the locale directories next to the script, in the user data
-    directory, and in /usr/share/locale. Falls back to the English source
-    strings if no catalog is found.
+    Searches the locale directories next to the script, in the Meson install
+    prefix, in the user data directory, and in /usr/share/locale. Falls back
+    to the English source strings if no catalog is found.
     """
     here = [
         os.path.dirname(os.path.abspath(__file__)),
         os.path.dirname(os.path.realpath(__file__)),  # in case of a symlink
     ]
     localedirs = [os.path.join(d, "locale") for d in dict.fromkeys(here)]
+    # Meson installs the extension to <prefix>/share/nautilus-python/extensions,
+    # so the catalogs are two levels up in <prefix>/share/locale.
+    localedirs.append(
+        os.path.normpath(
+            os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "locale")
+        )
+    )
     localedirs.append(os.path.join(GLib.get_user_data_dir(), "locale"))
     localedirs.append("/usr/share/locale")
+    localedirs = list(dict.fromkeys(localedirs))
 
     # e.g. ["de_DE.UTF-8", "de_DE", "de.UTF-8", "de"] from the session locale
     languages = [lang for lang in GLib.get_language_names() if lang != "C"]
@@ -199,9 +208,9 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         error: Optional[str] = None
         if not name:
             error = _("Please enter a file name.")
-        elif "/" in name or "\0" in name:
+        elif "/" in name or any(ord(c) < 32 or ord(c) == 127 for c in name):
             error = _("Invalid file name.")
-        elif name in (".", "..") or all(c == "." for c in name):
+        elif all(c == "." for c in name):
             error = _("Invalid file name.")
 
         if error:
@@ -259,9 +268,13 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
             return
         try:
             target.query_info_finish(result)
-        except GLib.Error:
-            # Not found (or not queryable): real errors surface on creation
-            self._set_validation(entry, dialog, None, True)
+        except GLib.Error as error:
+            if error.matches(Gio.io_error_quark(), Gio.IOErrorEnum.NOT_FOUND):
+                self._set_validation(entry, dialog, None, True)
+            else:
+                # Don't enable "Create" if we can't tell whether the name is
+                # free, e.g. because the folder isn't readable.
+                self._set_validation(entry, dialog, self._format_error(error), False)
             return
         error = _("“{name}” already exists.").format(name=name)
         self._set_validation(entry, dialog, error, False)

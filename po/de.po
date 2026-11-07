@@ -13,10 +13,6 @@ msgid "Create New File…"
 msgstr "Neue Datei erstellen …"
 
 #: nautilus-create-file.py
-msgid "Enter a name and extension to create a file"
-msgstr "Name und Endung der neuen Datei eingeben"
-
-#: nautilus-create-file.py
 msgid "New File"
 msgstr "Neue Datei"
 

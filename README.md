@@ -18,10 +18,13 @@ A small [Nautilus](https://apps.gnome.org/Nautilus/) (GNOME Files) extension tha
   - Fedora: `nautilus-python`
   - Arch: `python-nautilus`
   - Debian/Ubuntu: `python3-nautilus`
+- gettext (provides `msgfmt`) when installing from source, for the translations
+  - Fedora: `gettext`
+  - Debian/Ubuntu: `gettext`
 
 ## Installation
 
-### Per user (no build tools needed)
+### Per user
 
 ```sh
 git clone https://github.com/crian/nautilus-create-file.git
@@ -31,6 +34,9 @@ nautilus -q
 ```
 
 Uninstall with `bash install.sh uninstall`.
+
+`install.sh` compiles the catalogs with `msgfmt`. If gettext is not installed,
+it skips the translations and installs the extension with English texts only.
 
 ### With Meson
 
@@ -42,33 +48,62 @@ nautilus -q
 
 ## Translating
 
-The extension uses plain gettext with the domain `nautilus-create-file`.
+The extension uses plain gettext with the domain `nautilus-create-file`. The
+catalogs in `po/` are compiled with `msgfmt` when installing.
 
-1. Copy `po/nautilus-create-file.pot` to `po/<lang>.po` (e.g. `po/fr.po`).
-2. Set `"Language: <lang>\n"` in the header and fill in the `msgstr` entries.
+1. Create a catalog for the new language:
+
+   ```sh
+   msginit --no-translator -l fr -i po/nautilus-create-file.pot -o po/fr.po
+   ```
+
+   Alternatively, copy `po/nautilus-create-file.pot` to `po/<lang>.po` and set
+   `"Language: <lang>\n"` in the header.
+
+2. Translate the `msgstr` entries, e.g. with Poedit or Gtranslator.
 3. Add `<lang>` to `po/LINGUAS`.
-4. Run `python3 compile-translations.py` to test, or just install again.
+4. Check the result:
 
-Pull requests with new translations are welcome.
+   ```sh
+   msgfmt --check -o /dev/null po/<lang>.po
+   ```
 
-If you add or change strings in `nautilus-create-file.py`, update the template with:
+5. Install and try it in Nautilus:
+
+   ```sh
+   LANGUAGE=<lang> bash install.sh
+   nautilus -q
+   ```
+
+Pull requests with new translations are welcome. If you would rather use a web
+interface, a Weblate project can be connected to this repository.
+
+When strings change, regenerate the template and merge it into the catalogs:
 
 ```sh
 xgettext --from-code=UTF-8 -L Python -k_ -o po/nautilus-create-file.pot nautilus-create-file.py
+msgmerge --update po/de.po po/nautilus-create-file.pot
 ```
 
 ## Development
 
-Run the checks locally:
+The checks below use GNU gettext. On Debian/Ubuntu: `sudo apt install gettext`.
 
 ```sh
-python3 -m py_compile nautilus-create-file.py compile-translations.py
+python3 -m py_compile nautilus-create-file.py tests/*.py
 python3 -m unittest discover -s tests -v
-python3 compile-translations.py
-for po in po/*.po; do msgfmt --check -o /dev/null "$po"; done
+
+for po in po/*.po; do
+    msgfmt --check -o /dev/null "$po"
+    msgcmp "$po" po/nautilus-create-file.pot
+done
+
+xgettext --from-code=UTF-8 -L Python -k_ -o /tmp/current.pot nautilus-create-file.py
+msgcmp --use-untranslated /tmp/current.pot po/nautilus-create-file.pot
+msgcmp --use-untranslated po/nautilus-create-file.pot /tmp/current.pot
 ```
 
-With Meson and gettext installed, the standard translation workflow is:
+With Meson the usual gettext targets are available:
 
 ```sh
 meson setup build --prefix="$HOME/.local"
@@ -77,7 +112,8 @@ meson compile -C build nautilus-create-file-update-po
 meson install -C build
 ```
 
-CI runs the same checks on every push and pull request.
+CI checks the syntax, runs the unit tests, verifies that every message is
+translated and that the template matches the source strings.
 
 ## Known limitations
 

@@ -11,7 +11,13 @@ DOMAIN="nautilus-create-file"
 
 if [[ "${1:-}" == "uninstall" ]]; then
     rm -f "$EXT_DIR/nautilus-create-file.py"
+    rm -f "$EXT_DIR"/__pycache__/nautilus-create-file.*.pyc
+    rmdir "$EXT_DIR/__pycache__" 2>/dev/null || true
     find "$DATA/locale" -name "$DOMAIN.mo" -delete 2>/dev/null || true
+    for mo in locale/*/LC_MESSAGES/$DOMAIN.mo; do
+        lang="$(basename "$(dirname "$(dirname "$mo")")")"
+        rmdir "$DATA/locale/$lang/LC_MESSAGES" "$DATA/locale/$lang" 2>/dev/null || true
+    done
     echo "Removed. Restart Nautilus with: nautilus -q"
     exit 0
 fi

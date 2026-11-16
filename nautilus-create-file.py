@@ -19,9 +19,19 @@ if not hasattr(Adw, "AlertDialog"):
 
 DEFAULT_NAME = "new-file.txt"
 
-# Virtual locations where files can't be created
+# Virtual locations where files can't be created. Real network mounts use
+# their own schemes (smb, sftp, nfs, ...) and remain supported.
 UNSUPPORTED_SCHEMES = frozenset(
-    {"trash", "recent", "starred", "x-nautilus-search", "other-locations"}
+    {
+        "trash",
+        "recent",
+        "starred",
+        "x-nautilus-search",
+        "other-locations",
+        "computer",
+        "network",
+        "x-network-view",
+    }
 )
 
 # Delay before checking whether a name exists, so typing doesn't trigger I/O per key
@@ -78,12 +88,24 @@ def _can_create_in(location: Gio.File) -> bool:
     return location.get_uri_scheme() not in UNSUPPORTED_SCHEMES
 
 
+def _validate_name(name: str) -> Optional[str]:
+    """Return a translated error for *name*, or None if it can be used."""
+    if not name:
+        return _("Please enter a file name.")
+    if "/" in name or any(ord(c) < 32 or ord(c) == 127 for c in name):
+        return _("Invalid file name.")
+    if all(c == "." for c in name):
+        return _("Invalid file name.")
+    return None
+
+
 class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
     """Nautilus extension providing a "Create New File…" context menu entry."""
 
     def __init__(self) -> None:
         super().__init__()
         self._dialog_open: bool = False
+        self._creating: bool = False
         self._check_source: int = 0  # pending debounce timeout, 0 if none
         self._check_id: int = 0  # bumped to invalidate in-flight checks
 
@@ -144,6 +166,7 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         dialog.set_response_enabled("create", False)
 
         entry = Gtk.Entry(text=DEFAULT_NAME, activates_default=True)
+        entry.update_property([Gtk.AccessibleProperty.LABEL], [_("File name")])
         entry.connect("changed", self._on_changed, dialog, folder)
         dialog.set_extra_child(entry)
 
@@ -171,6 +194,7 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
     def _on_closed(self, _dialog: Adw.AlertDialog) -> None:
         """Reset the dialog-open flag when the dialog is closed."""
         self._cancel_pending_check()
+        self._creating = False
         self._dialog_open = False
 
     def _cancel_pending_check(self) -> None:
@@ -205,14 +229,7 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         name = entry.get_text().strip()
         self._cancel_pending_check()
 
-        error: Optional[str] = None
-        if not name:
-            error = _("Please enter a file name.")
-        elif "/" in name or any(ord(c) < 32 or ord(c) == 127 for c in name):
-            error = _("Invalid file name.")
-        elif all(c == "." for c in name):
-            error = _("Invalid file name.")
-
+        error = _validate_name(name)
         if error:
             self._set_validation(entry, dialog, error, False)
             return
@@ -247,7 +264,7 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
             return GLib.SOURCE_REMOVE
 
         target.query_info_async(
-            "standard::name",
+            Gio.FILE_ATTRIBUTE_STANDARD_TYPE,
             Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
             GLib.PRIORITY_DEFAULT,
             None,
@@ -267,7 +284,7 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         if check_id != self._check_id:
             return
         try:
-            target.query_info_finish(result)
+            info = target.query_info_finish(result)
         except GLib.Error as error:
             if error.matches(Gio.io_error_quark(), Gio.IOErrorEnum.NOT_FOUND):
                 self._set_validation(entry, dialog, None, True)
@@ -276,6 +293,14 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
                 # free, e.g. because the folder isn't readable.
                 self._set_validation(entry, dialog, self._format_error(error), False)
             return
+
+        if not info.has_attribute(Gio.FILE_ATTRIBUTE_STANDARD_TYPE):
+            # The backend returned a partial result (e.g. for an unreadable
+            # folder), so we can't tell whether the name is free. Let the
+            # creation attempt surface the real error.
+            self._set_validation(entry, dialog, None, True)
+            return
+
         error = _("“{name}” already exists.").format(name=name)
         self._set_validation(entry, dialog, error, False)
 
@@ -291,10 +316,16 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         parent: Optional[Gtk.Window],
     ) -> None:
         """Handle the dialog response and create the file if requested."""
-        if response != "create":
+        if response != "create" or self._creating:
             return
 
         name = entry.get_text().strip()
+        error = _validate_name(name)
+        if error:
+            self._show_message(parent, error)
+            return
+
+        self._creating = True
         try:
             target = folder.get_child_for_display_name(name)
             target.create_async(
@@ -305,6 +336,7 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
                 parent,
             )
         except GLib.Error as e:
+            self._creating = False
             self._show_error(parent, e)
 
     def _on_created(
@@ -332,8 +364,12 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
         """Finish closing the new file's stream (commits it on remote mounts)."""
         try:
             stream.close_finish(result)
-        except GLib.Error as e:
-            self._show_error(parent, e)
+        except GLib.Error:
+            # The file itself was created; only finalizing the stream failed.
+            self._show_message(
+                parent,
+                _("The file was created, but could not be finalized."),
+            )
 
     def _format_error(self, error: GLib.Error) -> str:
         """Turn *error* into a user-friendly translated message.
@@ -349,16 +385,30 @@ class CreateFileExtension(GObject.GObject, Nautilus.MenuProvider):
             return _("Read-only file system.")
         if error.matches(Gio.io_error_quark(), Gio.IOErrorEnum.NO_SPACE):
             return _("No space left on device.")
+        if error.matches(Gio.io_error_quark(), Gio.IOErrorEnum.FILENAME_TOO_LONG):
+            return _("The file name is too long.")
+        if error.matches(Gio.io_error_quark(), Gio.IOErrorEnum.INVALID_FILENAME):
+            return _("Invalid file name.")
+        if error.matches(Gio.io_error_quark(), Gio.IOErrorEnum.NOT_DIRECTORY):
+            return _("The destination is not a folder.")
+        if error.matches(Gio.io_error_quark(), Gio.IOErrorEnum.NOT_MOUNTED):
+            return _("The location is not mounted.")
+        if error.matches(Gio.io_error_quark(), Gio.IOErrorEnum.NOT_SUPPORTED):
+            return _("This location does not support creating files.")
         message = error.message.strip() if error.message else ""
         if not message:
             return _("An unknown error occurred.")
         return message
 
-    def _show_error(self, parent: Optional[Gtk.Window], error: GLib.Error) -> None:
-        """Show an error dialog for *error* to the user."""
+    def _show_message(self, parent: Optional[Gtk.Window], body: str) -> None:
+        """Show an error dialog with *body* to the user."""
         dialog = Adw.AlertDialog(
             heading=_("Creation Error"),
-            body=self._format_error(error),
+            body=body,
         )
         dialog.add_response("ok", _("OK"))
         dialog.present(parent)
+
+    def _show_error(self, parent: Optional[Gtk.Window], error: GLib.Error) -> None:
+        """Show an error dialog for *error* to the user."""
+        self._show_message(parent, self._format_error(error))

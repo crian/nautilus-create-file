@@ -57,6 +57,28 @@ If you add or change strings in `nautilus-create-file.py`, update the template w
 xgettext --from-code=UTF-8 -L Python -k_ -o po/nautilus-create-file.pot nautilus-create-file.py
 ```
 
+## Development
+
+Run the checks locally:
+
+```sh
+python3 -m py_compile nautilus-create-file.py compile-translations.py
+python3 -m unittest discover -s tests -v
+python3 compile-translations.py
+for po in po/*.po; do msgfmt --check -o /dev/null "$po"; done
+```
+
+With Meson and gettext installed, the standard translation workflow is:
+
+```sh
+meson setup build --prefix="$HOME/.local"
+meson compile -C build nautilus-create-file-pot
+meson compile -C build nautilus-create-file-update-po
+meson install -C build
+```
+
+CI runs the same checks on every push and pull request.
+
 ## Known limitations
 
 - The newly created file is not selected afterwards (the Nautilus extension API has no hook for this).

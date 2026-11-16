@@ -3,6 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: nautilus-create-file\n"
+"POT-Creation-Date: 2026-11-16 09:35+0100\n"
 "PO-Revision-Date: 2026-11-16 00:00+0100\n"
 "Last-Translator: crian <crian84@gmail.com>\n"
 "Language-Team: German\n"
@@ -11,87 +12,88 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: nautilus-create-file.py
-msgid "Create New File…"
-msgstr "Neue Datei erstellen…"
-
-#: nautilus-create-file.py
-msgid "New File"
-msgstr "Neue Datei"
-
-#: nautilus-create-file.py
-msgid "Enter a file name:"
-msgstr "Dateinamen eingeben:"
-
-#: nautilus-create-file.py
-msgid "File name"
-msgstr "Dateiname"
-
-#: nautilus-create-file.py
-msgid "Cancel"
-msgstr "Abbrechen"
-
-#: nautilus-create-file.py
-msgid "Create"
-msgstr "Erstellen"
-
-#: nautilus-create-file.py
-msgid "Invalid file name."
-msgstr "Ungültiger Dateiname."
-
-#: nautilus-create-file.py
+#: nautilus-create-file.py:94
 msgid "Please enter a file name."
 msgstr "Bitte geben Sie einen Dateinamen ein."
 
-#: nautilus-create-file.py
+#: nautilus-create-file.py:96 nautilus-create-file.py:98
+#: nautilus-create-file.py:263 nautilus-create-file.py:391
+msgid "Invalid file name."
+msgstr "Ungültiger Dateiname."
+
+#: nautilus-create-file.py:119
+msgid "Create New File…"
+msgstr "Neue Datei erstellen…"
+
+#: nautilus-create-file.py:158
+msgid "New File"
+msgstr "Neue Datei"
+
+#: nautilus-create-file.py:159 nautilus-create-file.py:219
+msgid "Enter a file name:"
+msgstr "Dateinamen eingeben:"
+
+#: nautilus-create-file.py:161
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: nautilus-create-file.py:162
+msgid "Create"
+msgstr "Erstellen"
+
+#: nautilus-create-file.py:169
+msgid "File name"
+msgstr "Dateiname"
+
+#: nautilus-create-file.py:304
 #, python-brace-format
 msgid "“{name}” already exists."
 msgstr "„{name}“ existiert bereits."
 
-#: nautilus-create-file.py
-msgid "A file with this name already exists."
-msgstr "Eine Datei mit diesem Namen existiert bereits."
-
-#: nautilus-create-file.py
-msgid "Creation Error"
-msgstr "Fehler beim Erstellen"
-
-#: nautilus-create-file.py
-msgid "OK"
-msgstr "OK"
-
-#: nautilus-create-file.py
-msgid "An unknown error occurred."
-msgstr "Ein unbekannter Fehler ist aufgetreten."
-
-#: nautilus-create-file.py
+#: nautilus-create-file.py:371
 msgid "The file was created, but could not be finalized."
 msgstr "Die Datei wurde erstellt, konnte aber nicht abgeschlossen werden."
 
-#: nautilus-create-file.py
+#: nautilus-create-file.py:381
+msgid "A file with this name already exists."
+msgstr "Eine Datei mit diesem Namen existiert bereits."
+
+#: nautilus-create-file.py:383
 msgid "Permission denied."
 msgstr "Keine Berechtigung."
 
-#: nautilus-create-file.py
+#: nautilus-create-file.py:385
 msgid "Read-only file system."
 msgstr "Schreibgeschütztes Dateisystem."
 
-#: nautilus-create-file.py
+#: nautilus-create-file.py:387
 msgid "No space left on device."
 msgstr "Kein Speicherplatz mehr auf dem Gerät."
 
-#: nautilus-create-file.py
+#: nautilus-create-file.py:389
 msgid "The file name is too long."
 msgstr "Der Dateiname ist zu lang."
 
-#: nautilus-create-file.py
+#: nautilus-create-file.py:393
 msgid "The destination is not a folder."
 msgstr "Das Ziel ist kein Ordner."
 
-#: nautilus-create-file.py
+#: nautilus-create-file.py:395
 msgid "The location is not mounted."
 msgstr "Der Ort ist nicht eingebunden."
 
-#: nautilus-create-file.py
+#: nautilus-create-file.py:397
 msgid "This location does not support creating files."
 msgstr "An diesem Ort können keine Dateien erstellt werden."
+
+#: nautilus-create-file.py:400
+msgid "An unknown error occurred."
+msgstr "Ein unbekannter Fehler ist aufgetreten."
+
+#: nautilus-create-file.py:406
+msgid "Creation Error"
+msgstr "Fehler beim Erstellen"
+
+#: nautilus-create-file.py:409
+msgid "OK"
+msgstr "OK"

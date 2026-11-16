@@ -2,92 +2,94 @@
 # This file is distributed under the same license as the extension.
 msgid ""
 msgstr ""
-"Project-Id-Version: nautilus-create-file\n"
+"Project-Id-Version: nautilus-create-file 1.0.0\n"
+"POT-Creation-Date: 2026-11-16 09:35+0100\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: nautilus-create-file.py
-msgid "Create New File…"
-msgstr ""
-
-#: nautilus-create-file.py
-msgid "New File"
-msgstr ""
-
-#: nautilus-create-file.py
-msgid "Enter a file name:"
-msgstr ""
-
-#: nautilus-create-file.py
-msgid "File name"
-msgstr ""
-
-#: nautilus-create-file.py
-msgid "Cancel"
-msgstr ""
-
-#: nautilus-create-file.py
-msgid "Create"
-msgstr ""
-
-#: nautilus-create-file.py
-msgid "Invalid file name."
-msgstr ""
-
-#: nautilus-create-file.py
+#: nautilus-create-file.py:94
 msgid "Please enter a file name."
 msgstr ""
 
-#: nautilus-create-file.py
+#: nautilus-create-file.py:96 nautilus-create-file.py:98
+#: nautilus-create-file.py:263 nautilus-create-file.py:391
+msgid "Invalid file name."
+msgstr ""
+
+#: nautilus-create-file.py:119
+msgid "Create New File…"
+msgstr ""
+
+#: nautilus-create-file.py:158
+msgid "New File"
+msgstr ""
+
+#: nautilus-create-file.py:159 nautilus-create-file.py:219
+msgid "Enter a file name:"
+msgstr ""
+
+#: nautilus-create-file.py:161
+msgid "Cancel"
+msgstr ""
+
+#: nautilus-create-file.py:162
+msgid "Create"
+msgstr ""
+
+#: nautilus-create-file.py:169
+msgid "File name"
+msgstr ""
+
+#: nautilus-create-file.py:304
 #, python-brace-format
 msgid "“{name}” already exists."
 msgstr ""
 
-#: nautilus-create-file.py
-msgid "A file with this name already exists."
-msgstr ""
-
-#: nautilus-create-file.py
-msgid "Creation Error"
-msgstr ""
-
-#: nautilus-create-file.py
-msgid "OK"
-msgstr ""
-
-#: nautilus-create-file.py
-msgid "An unknown error occurred."
-msgstr ""
-
-#: nautilus-create-file.py
+#: nautilus-create-file.py:371
 msgid "The file was created, but could not be finalized."
 msgstr ""
 
-#: nautilus-create-file.py
+#: nautilus-create-file.py:381
+msgid "A file with this name already exists."
+msgstr ""
+
+#: nautilus-create-file.py:383
 msgid "Permission denied."
 msgstr ""
 
-#: nautilus-create-file.py
+#: nautilus-create-file.py:385
 msgid "Read-only file system."
 msgstr ""
 
-#: nautilus-create-file.py
+#: nautilus-create-file.py:387
 msgid "No space left on device."
 msgstr ""
 
-#: nautilus-create-file.py
+#: nautilus-create-file.py:389
 msgid "The file name is too long."
 msgstr ""
 
-#: nautilus-create-file.py
+#: nautilus-create-file.py:393
 msgid "The destination is not a folder."
 msgstr ""
 
-#: nautilus-create-file.py
+#: nautilus-create-file.py:395
 msgid "The location is not mounted."
 msgstr ""
 
-#: nautilus-create-file.py
+#: nautilus-create-file.py:397
 msgid "This location does not support creating files."
+msgstr ""
+
+#: nautilus-create-file.py:400
+msgid "An unknown error occurred."
+msgstr ""
+
+#: nautilus-create-file.py:406
+msgid "Creation Error"
+msgstr ""
+
+#: nautilus-create-file.py:409
+msgid "OK"
 msgstr ""

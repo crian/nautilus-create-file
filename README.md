@@ -13,13 +13,15 @@ A small [Nautilus](https://apps.gnome.org/Nautilus/) (GNOME Files) extension tha
 
 ## Requirements
 
-- Nautilus 46 or newer (needs `Adw.AlertDialog`, libadwaita ≥ 1.5)
-- [nautilus-python](https://gitlab.gnome.org/GNOME/nautilus-python) for Nautilus 4.x
+- Nautilus 49 or newer (extension API 4.1; needs `Adw.AlertDialog`, libadwaita ≥ 1.5)
+- [nautilus-python](https://gitlab.gnome.org/GNOME/nautilus-python) 4.1 or newer for
+  Nautilus 49+ (older 4.0.x releases load the 4.0 API and do not work)
   - Fedora: `nautilus-python`
   - Arch: `python-nautilus`
   - Debian/Ubuntu: `python3-nautilus`
 - gettext (provides `msgfmt`) when installing from source, for the translations
   - Fedora: `gettext`
+  - Arch: `gettext`
   - Debian/Ubuntu: `gettext`
 
 ## Installation
@@ -68,11 +70,13 @@ catalogs in `po/` are compiled with `msgfmt` when installing.
    msgfmt --check -o /dev/null po/<lang>.po
    ```
 
-5. Install and try it in Nautilus:
+5. Install and try it in Nautilus. `install.sh` installs every catalog, so the
+   `LANGUAGE` variable only matters for Nautilus itself:
 
    ```sh
-   LANGUAGE=<lang> bash install.sh
+   bash install.sh
    nautilus -q
+   LANGUAGE=<lang> nautilus
    ```
 
 Pull requests with new translations are welcome. If you would rather use a web
@@ -81,7 +85,9 @@ interface, a Weblate project can be connected to this repository.
 When strings change, regenerate the template and merge it into the catalogs:
 
 ```sh
-xgettext --from-code=UTF-8 -L Python -k_ -o po/nautilus-create-file.pot nautilus-create-file.py
+xgettext --from-code=UTF-8 -L Python -k_ \
+    --package-name=nautilus-create-file --package-version=1.0.0 \
+    -o po/nautilus-create-file.pot nautilus-create-file.py
 msgmerge --update po/de.po po/nautilus-create-file.pot
 ```
 
@@ -98,7 +104,9 @@ for po in po/*.po; do
     msgcmp "$po" po/nautilus-create-file.pot
 done
 
-xgettext --from-code=UTF-8 -L Python -k_ -o /tmp/current.pot nautilus-create-file.py
+xgettext --from-code=UTF-8 -L Python -k_ \
+    --package-name=nautilus-create-file --package-version=1.0.0 \
+    -o /tmp/current.pot nautilus-create-file.py
 msgcmp --use-untranslated /tmp/current.pot po/nautilus-create-file.pot
 msgcmp --use-untranslated po/nautilus-create-file.pot /tmp/current.pot
 ```

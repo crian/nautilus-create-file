@@ -17,7 +17,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y gettext
 
       - name: Check syntax
-        run: python3 -m py_compile nautilus-create-file.py compile-translations.py
+        run: python3 -m py_compile nautilus-create-file.py tests/*.py
 
       - name: Run unit tests
         run: python3 -m unittest discover -s tests -v
@@ -28,28 +28,19 @@ jobs:
             msgfmt --check -o /dev/null "$po"
           done
 
-      - name: Compile translations
-        run: python3 compile-translations.py
+      - name: Check that every message is translated
+        run: |
+          for po in po/*.po; do
+            echo "Checking $po"
+            msgcmp "$po" po/nautilus-create-file.pot
+            if msgattrib --only-obsolete "$po" | grep -q '^msgid "'; then
+              echo "::error file=$po::contains obsolete messages; run msgmerge"
+              exit 1
+            fi
+          done
 
       - name: Check translation template
         run: |
           xgettext --from-code=UTF-8 -L Python -k_ -o "$RUNNER_TEMP/current.pot" nautilus-create-file.py
-          python3 - "$RUNNER_TEMP/current.pot" <<'PY'
-          import importlib.util
-          import sys
-
-          spec = importlib.util.spec_from_file_location("ct", "compile-translations.py")
-          ct = importlib.util.module_from_spec(spec)
-          spec.loader.exec_module(ct)
-
-          committed = set(ct.parse_po("po/nautilus-create-file.pot")) - {""}
-          generated = set(ct.parse_po(sys.argv[1])) - {""}
-          if committed != generated:
-              print("po/nautilus-create-file.pot is out of date:")
-              for msg in sorted(generated - committed):
-                  print(f"  missing: {msg!r}")
-              for msg in sorted(committed - generated):
-                  print(f"  stale:   {msg!r}")
-              sys.exit(1)
-          print("Translation template is up to date.")
-          PY
+          msgcmp --use-untranslated "$RUNNER_TEMP/current.pot" po/nautilus-create-file.pot
+          msgcmp --use-untranslated po/nautilus-create-file.pot "$RUNNER_TEMP/current.pot"

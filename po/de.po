@@ -80,11 +80,11 @@ msgstr "Das Ziel ist kein Ordner."
 
 #: nautilus-create-file.py:395
 msgid "The location is not mounted."
-msgstr "Der Ort ist nicht eingebunden."
+msgstr "Der Speicherort ist nicht eingebunden."
 
 #: nautilus-create-file.py:397
 msgid "This location does not support creating files."
-msgstr "An diesem Ort können keine Dateien erstellt werden."
+msgstr "An diesem Speicherort können keine Dateien erstellt werden."
 
 #: nautilus-create-file.py:400
 msgid "An unknown error occurred."
